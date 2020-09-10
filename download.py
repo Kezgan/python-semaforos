@@ -1,9 +1,9 @@
-import requests
 import time
 import logging
 import threading
 
 from tiempo import Contador
+from pip._vendor import requests
 
 logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
@@ -40,12 +40,19 @@ tiempo = Contador()
 tiempo.iniciar()
 
 # una por una
-for url in img_urls:
-    bajar_imagen(url)
+#for url in img_urls:
+    #bajar_imagen(url)
 
-tiempo.finalizar()
-tiempo.imprimir()
+#tiempo.finalizar()
+#tiempo.imprimir()
 
 
 
 # Pero ahora con threads
+for url in img_urls:
+    t = threading.Thread(target=bajar_imagen(url))
+    t.start()
+    t.join()
+
+tiempo.finalizar()
+tiempo.imprimir()

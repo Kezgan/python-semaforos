@@ -4,6 +4,11 @@ import logging
 
 logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
+mutexCocinero = threading.Semaphore(0)
+mutexComensal = threading.Semaphore(1)
+
+cantidadPlatos = 3
+
 class Cocinero(threading.Thread):
   def __init__(self):
     super().__init__()
@@ -12,8 +17,12 @@ class Cocinero(threading.Thread):
   def run(self):
     global platosDisponibles
     while (True):
-      logging.info('Reponiendo los platos...')
-      platosDisponibles = 3
+      mutexCocinero.acquire()
+      try:
+        logging.info('Reponiendo los platos...')
+        platosDisponibles = cantidadPlatos
+      finally:
+        mutexComensal.release()
 
 class Comensal(threading.Thread):
   def __init__(self, numero):
@@ -22,10 +31,18 @@ class Comensal(threading.Thread):
 
   def run(self):
     global platosDisponibles
-    platosDisponibles -= 1
-    logging.info(f'¡Qué rico! Quedan {platosDisponibles} platos')
 
-platosDisponibles = 3
+    mutexComensal.acquire()
+    try:
+      while platosDisponibles == 0:
+        mutexCocinero.release()
+        mutexComensal.acquire()
+      platosDisponibles -= 1
+      logging.info(f'¡Qué rico! Quedan {platosDisponibles} platos')
+    finally:
+      mutexComensal.release()
+
+platosDisponibles = cantidadPlatos
 
 Cocinero().start()
 
